@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Resend } from "resend"
 
 const RECIPIENT_EMAIL = "info@futuranrg.com"
 
@@ -12,6 +11,7 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+    const { Resend } = await import("resend")
     const resend = new Resend(apiKey)
     const body = await request.json()
     const { department, name, surname, email, phone, message } = body as {
