@@ -38,11 +38,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/Futura-Icon.png", type: "image/png" },
-      { url: "/Futura-Icon.png", media: "(prefers-color-scheme: light)", type: "image/png" },
-      { url: "/Futura-Icon.png", media: "(prefers-color-scheme: dark)", type: "image/png" },
+      { url: "/Futura-Icon2.png", type: "image/png", sizes: "32x32" },
+      { url: "/Futura-Icon2.png", type: "image/png", sizes: "64x64", media: "(prefers-color-scheme: light)" },
+      { url: "/Futura-Icon2.png", type: "image/png", sizes: "64x64", media: "(prefers-color-scheme: dark)" },
     ],
-    apple: "/Futura-Icon.png",
+    apple: "/Futura-Icon2.png",
   },
 }
 
