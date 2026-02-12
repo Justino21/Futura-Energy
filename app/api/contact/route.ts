@@ -3,16 +3,16 @@ import { Resend } from "resend"
 
 const RECIPIENT_EMAIL = "info@futuranrg.com"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.RESEND_API_KEY?.trim()) {
+    const apiKey = process.env.RESEND_API_KEY?.trim()
+    if (!apiKey) {
       return NextResponse.json(
-        { error: "Email is not configured (missing RESEND_API_KEY). Add it in .env.local." },
+        { error: "Email is not configured (missing RESEND_API_KEY). Add it in .env.local or Vercel env vars." },
         { status: 500 }
       )
     }
+    const resend = new Resend(apiKey)
     const body = await request.json()
     const { department, name, surname, email, phone, message } = body as {
       department?: string
