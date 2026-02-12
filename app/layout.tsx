@@ -14,10 +14,28 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.futuranrg.com"),
   title: "Futura Energy | Global Energy Trading",
   description:
     "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
   generator: "v0.app",
+  openGraph: {
+    title: "Futura Energy | Global Energy Trading",
+    description:
+      "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
+    url: "https://www.futuranrg.com",
+    siteName: "Futura Energy",
+    images: [{ url: "/futura-logo.png", width: 512, height: 512, alt: "Futura Energy" }],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Futura Energy | Global Energy Trading",
+    description:
+      "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
+    images: ["/futura-logo.png"],
+  },
   icons: {
     icon: [
       {
