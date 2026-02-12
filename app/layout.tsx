@@ -25,7 +25,7 @@ export const metadata: Metadata = {
       "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
     url: "https://www.futuranrg.com",
     siteName: "Futura Energy",
-    images: [{ url: "/futura-logo.png", width: 512, height: 512, alt: "Futura Energy" }],
+    images: [{ url: "/Futura-Icon2.png", width: 512, height: 512, alt: "Futura Energy" }],
     locale: "en_US",
     type: "website",
   },
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     title: "Futura Energy | Global Energy Trading",
     description:
       "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
-    images: ["/futura-logo.png"],
+    images: ["/Futura-Icon2.png"],
   },
   icons: {
     icon: [
