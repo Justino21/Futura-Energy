@@ -87,6 +87,12 @@ export function SiteHeader() {
             src="/Futura_New.png"
             alt="Futura Energy"
             className="h-14 w-auto max-w-[100px] object-contain"
+            onError={(e) => {
+              const el = e.currentTarget;
+              if (el.src.endsWith('Futura_New.png')) {
+                el.src = '/futura-logo.png';
+              }
+            }}
           />
         </Link>
 
@@ -169,7 +175,17 @@ export function SiteHeader() {
             </button>
             <div className="flex flex-col flex-1 min-h-0 overflow-auto pt-[4.5rem] pb-10 px-5">
               <div className="flex justify-center mb-10 shrink-0">
-                <img src="/Futura_New.png" alt="Futura Energy" className="h-10 w-auto max-w-[80px] object-contain" />
+                <img
+                src="/Futura_New.png"
+                alt="Futura Energy"
+                className="h-10 w-auto max-w-[80px] object-contain"
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  if (el.src.endsWith('Futura_New.png')) {
+                    el.src = '/futura-logo.png';
+                  }
+                }}
+              />
               </div>
               <nav className="flex flex-col gap-0.5 shrink-0">
                 {navigationItems.map((item) => (
