@@ -49,6 +49,7 @@ const NUM_SECTIONS = 8;
 const SECTION_HEIGHT_VH = 100;
 const SNAP_DURATION = 0.8;
 const SNAP_EASE_OUT = (t: number) => 1 - Math.pow(1 - t, 3);
+const MOBILE_SNAP_DURATION_MS = 520;
 const WHEEL_THRESHOLD = 25;
 
 // Ultra-smooth spring config
@@ -867,8 +868,18 @@ export default function ScrollVideoExperience() {
     const targetY = b.containerTop + index * b.wh;
     isSnappingRef.current = true;
     if (isMobile === true) {
-      window.scrollTo({ top: targetY, behavior: 'smooth' });
-      setTimeout(() => { isSnappingRef.current = false; }, 450);
+      const startY = window.scrollY;
+      const startT = performance.now();
+      const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+      const tick = (now: number) => {
+        const elapsed = now - startT;
+        const t = Math.min(1, elapsed / MOBILE_SNAP_DURATION_MS);
+        const eased = easeOutCubic(t);
+        window.scrollTo(0, startY + (targetY - startY) * eased);
+        if (t < 1) requestAnimationFrame(tick);
+        else isSnappingRef.current = false;
+      };
+      requestAnimationFrame(tick);
       return;
     }
     const lenis = lenisRef.current;
@@ -898,7 +909,8 @@ export default function ScrollVideoExperience() {
         if (!b) return;
         const currentY = window.scrollY;
         const targetY = b.containerTop + idx * b.wh;
-        if (Math.abs(currentY - targetY) < 8) return;
+        const threshold = isMobile === true ? 18 : 8;
+        if (Math.abs(currentY - targetY) < threshold) return;
         scrollToSectionIndex(idx);
       }, SCROLL_END_MS);
     };
