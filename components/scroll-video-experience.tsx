@@ -45,13 +45,11 @@ const SECTIONS = {
 };
 
 // Mobile scroll-snap section heights (vh) – one per “magnet” so users don’t skip (sum = 800)
-const MOBILE_SNAP_HEIGHTS_VH = [116, 156, 48, 64, 32, 96, 64, 88, 136];
-
-// Direct stops: scroll decelerates and lands on these (desktop + mobile)
-const SECTION_STOPS = [0, 0.145, 0.25, 0.44, 0.58, 0.775, 0.93, 1];
-const SNAP_DURATION = 0.85;
+const NUM_SECTIONS = 8;
+const SECTION_HEIGHT_VH = 100;
+const SNAP_DURATION = 0.8;
 const SNAP_EASE_OUT = (t: number) => 1 - Math.pow(1 - t, 3);
-const SNAP_PROXIMITY = 0.008;
+const WHEEL_THRESHOLD = 25;
 
 // Ultra-smooth spring config
 const SMOOTH_SPRING = { stiffness: 40, damping: 20, mass: 1.2 };
@@ -845,103 +843,97 @@ export default function ScrollVideoExperience() {
     return () => obs.disconnect();
   }, [isReady]);
 
-  // Section stops: when scroll settles, decelerate smoothly to nearest section (desktop + mobile)
+  // Section index from scroll (0..NUM_SECTIONS-1) and scroll to section (shared for snap + wheel)
+  const getContainerBounds = useCallback(() => {
+    if (!containerRef.current) return null;
+    const rect = containerRef.current.getBoundingClientRect();
+    const containerTop = rect.top + window.scrollY;
+    const wh = window.innerHeight;
+    return { containerTop, wh };
+  }, []);
+
+  const getCurrentSectionIndex = useCallback(() => {
+    const b = getContainerBounds();
+    if (!b) return 0;
+    const scrollY = window.scrollY;
+    const sectionPx = b.wh;
+    const raw = (scrollY - b.containerTop) / sectionPx;
+    return Math.max(0, Math.min(NUM_SECTIONS - 1, Math.round(raw)));
+  }, [getContainerBounds]);
+
+  const scrollToSectionIndex = useCallback((index: number) => {
+    const b = getContainerBounds();
+    if (!b) return;
+    const targetY = b.containerTop + index * b.wh;
+    isSnappingRef.current = true;
+    if (isMobile === true) {
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+      setTimeout(() => { isSnappingRef.current = false; }, 450);
+      return;
+    }
+    const lenis = lenisRef.current;
+    if (lenis) {
+      lenis.scrollTo(targetY, {
+        duration: SNAP_DURATION,
+        easing: SNAP_EASE_OUT,
+        onComplete: () => { isSnappingRef.current = false; },
+      });
+    } else {
+      isSnappingRef.current = false;
+    }
+  }, [getContainerBounds, isMobile]);
+
+  // Snap to nearest section when scroll settles (desktop + mobile)
   useEffect(() => {
     if (!isReady || !containerRef.current || isMobile === null) return;
-
-    const container = containerRef.current;
-    const getBounds = () => {
-      const rect = container.getBoundingClientRect();
-      const containerTop = rect.top + window.scrollY;
-      const containerHeight = container.offsetHeight;
-      const maxScroll = Math.max(0, containerHeight - window.innerHeight);
-      return { containerTop, containerHeight, maxScroll };
-    };
-
-    const progressFromScroll = (scrollY: number) => {
-      const { containerTop, maxScroll } = getBounds();
-      if (maxScroll <= 0) return 0;
-      return Math.max(0, Math.min(1, (scrollY - containerTop) / maxScroll));
-    };
-
-    const targetScrollYFromProgress = (progress: number) => {
-      const { containerTop, maxScroll } = getBounds();
-      return containerTop + progress * maxScroll;
-    };
-
-    const findNearestStop = (progress: number) => {
-      let nearest = SECTION_STOPS[0];
-      let best = Math.abs(progress - nearest);
-      for (const s of SECTION_STOPS) {
-        const d = Math.abs(progress - s);
-        if (d < best) {
-          best = d;
-          nearest = s;
-        }
-      }
-      return nearest;
-    };
-
-    const SCROLL_END_MS = 140;
-    let scrollEndTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const trySnapToSection = () => {
-      if (isSnappingRef.current) return;
-      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      const progress = progressFromScroll(scrollY);
-      const nearest = findNearestStop(progress);
-      if (Math.abs(progress - nearest) < SNAP_PROXIMITY) return;
-      const targetY = targetScrollYFromProgress(nearest);
-      isSnappingRef.current = true;
-
-      if (isMobile === true) {
-        window.scrollTo({ top: targetY, behavior: 'smooth' });
-        setTimeout(() => {
-          isSnappingRef.current = false;
-        }, 400);
-        return;
-      }
-
-      const lenis = lenisRef.current;
-      if (lenis) {
-        lenis.scrollTo(targetY, {
-          duration: SNAP_DURATION,
-          easing: SNAP_EASE_OUT,
-          onComplete: () => {
-            isSnappingRef.current = false;
-          },
-        });
-      } else {
-        isSnappingRef.current = false;
-      }
-    };
-
+    const SCROLL_END_MS = 120;
+    let t: ReturnType<typeof setTimeout> | null = null;
     const scheduleSnap = () => {
       if (isSnappingRef.current) return;
-      if (scrollEndTimer) clearTimeout(scrollEndTimer);
-      scrollEndTimer = setTimeout(() => {
-        scrollEndTimer = null;
-        trySnapToSection();
+      if (t) clearTimeout(t);
+      t = setTimeout(() => {
+        t = null;
+        const idx = getCurrentSectionIndex();
+        const b = getContainerBounds();
+        if (!b) return;
+        const currentY = window.scrollY;
+        const targetY = b.containerTop + idx * b.wh;
+        if (Math.abs(currentY - targetY) < 8) return;
+        scrollToSectionIndex(idx);
       }, SCROLL_END_MS);
     };
-
     if (isMobile === true) {
-      const onScroll = () => scheduleSnap();
-      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('scroll', scheduleSnap, { passive: true });
       return () => {
-        window.removeEventListener('scroll', onScroll);
-        if (scrollEndTimer) clearTimeout(scrollEndTimer);
+        window.removeEventListener('scroll', scheduleSnap);
+        if (t) clearTimeout(t);
       };
     }
-
     const lenis = lenisRef.current;
     if (!lenis) return;
-    const unsub = lenis.on('scroll', () => scheduleSnap());
+    const unsub = lenis.on('scroll', scheduleSnap);
     return () => {
       unsub();
-      if (scrollEndTimer) clearTimeout(scrollEndTimer);
+      if (t) clearTimeout(t);
     };
-  }, [isReady, isMobile]);
+  }, [isReady, isMobile, getContainerBounds, getCurrentSectionIndex, scrollToSectionIndex]);
+
+  // Desktop only: one wheel tick = one section (impossible to skip)
+  useEffect(() => {
+    if (!isReady || isMobile !== false || !containerRef.current) return;
+    const onWheel = (e: WheelEvent) => {
+      if (isSnappingRef.current) return;
+      const delta = e.deltaY;
+      if (Math.abs(delta) < WHEEL_THRESHOLD) return;
+      const idx = getCurrentSectionIndex();
+      const next = delta > 0 ? Math.min(NUM_SECTIONS - 1, idx + 1) : Math.max(0, idx - 1);
+      if (next === idx) return;
+      e.preventDefault();
+      scrollToSectionIndex(next);
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, [isReady, isMobile, getCurrentSectionIndex, scrollToSectionIndex]);
 
   // Render loop - optimized for 60fps smoothness
   useEffect(() => {
@@ -993,18 +985,11 @@ export default function ScrollVideoExperience() {
     return () => window.removeEventListener('resize', onResize);
   }, [setupCanvas]);
 
-  const scrollHeight = `${(TOTAL_FRAMES / 60) * 100}vh`;
-
   return (
     <div
       ref={containerRef}
-      className="home-scroll-container relative"
-      style={{
-        height: scrollHeight,
-        ...(isMobile === true
-          ? { display: 'flex', flexDirection: 'column', height: 'auto' }
-          : {}),
-      }}
+      className="home-scroll-container relative flex flex-col"
+      style={{ height: 'auto' }}
     >
       {/* Canvas */}
       <canvas
@@ -1029,15 +1014,14 @@ export default function ScrollVideoExperience() {
       <div className="mobile-home-glass" aria-hidden="true" />
 
       {/* Mobile: scroll-snap magnets so users don’t skip sections */}
-      {isMobile === true &&
-        MOBILE_SNAP_HEIGHTS_VH.map((h, i) => (
-          <div
-            key={i}
-            className="home-snap-section flex-shrink-0"
-            style={{ height: `${h}vh` }}
-            aria-hidden
-          />
-        ))}
+      {Array.from({ length: NUM_SECTIONS }, (_, i) => (
+        <div
+          key={i}
+          className="home-snap-section flex-shrink-0"
+          style={{ height: `${SECTION_HEIGHT_VH}vh` }}
+          aria-hidden
+        />
+      ))}
 
       {/* ========== HERO ========== */}
       <Section scrollProgress={scrollYProgress} start={SECTIONS.hero.start} end={SECTIONS.hero.end} align="top-left">
