@@ -86,7 +86,7 @@ export function SiteHeader() {
           <img
             src="/futura-logo.png"
             alt="Futura Energy"
-            className="h-12 w-auto max-w-[100px] object-contain"
+            className="h-14 w-auto max-w-[100px] object-contain"
           />
         </Link>
 
@@ -169,7 +169,7 @@ export function SiteHeader() {
             </button>
             <div className="flex flex-col flex-1 min-h-0 overflow-auto pt-[4.5rem] pb-10 px-5">
               <div className="flex justify-center mb-10 shrink-0">
-                <img src="/futura-logo.png" alt="Futura Energy" className="h-9 w-auto max-w-[80px] object-contain" />
+                <img src="/futura-logo.png" alt="Futura Energy" className="h-10 w-auto max-w-[80px] object-contain" />
               </div>
               <nav className="flex flex-col gap-0.5 shrink-0">
                 {navigationItems.map((item) => (
