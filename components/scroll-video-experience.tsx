@@ -33,9 +33,6 @@ const INITIAL_FRAMES = 150; // Target: 150 frames for "smooth from start" (fille
 const MIN_FRAMES_FOR_SMOOTH = 40; // Smooth from first frame we show
 const PRIORITY_FILL_END = 150; // Fill 0-150 in 5s = one frame per position for first ~31% (achievable in 5s)
 
-// Mobile: slower scroll so users don't skip content (taller scroll = more finger movement per section)
-const MOBILE_SCROLL_HEIGHT_MULTIPLIER = 1.75;
-
 // Section timing - User specified
 const SECTIONS = {
   hero: { start: 0, end: 0.145 },
@@ -231,7 +228,7 @@ export default function ScrollVideoExperience() {
   const [loadedCount, setLoadedCount] = useState(0);
   const [isSmoothReady, setIsSmoothReady] = useState(false); // True when enough frames for smooth scrolling
   const [showQualityIndicator, setShowQualityIndicator] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null); // null = not yet measured (don't init Lenis)
 
   const currentFrameRef = useRef(0);
   const targetFrameRef = useRef(0);
@@ -784,10 +781,10 @@ export default function ScrollVideoExperience() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Lenis smooth scroll on desktop; on mobile use native scroll so Safari minimizes UI
+  // Lenis only on desktop; never init on mobile so Safari gets native scroll and minimizes UI
   useEffect(() => {
-    if (!isReady) return;
-    if (isMobile) {
+    if (!isReady || isMobile === null) return;
+    if (isMobile === true) {
       lenisRef.current = null;
       return;
     }
@@ -814,7 +811,7 @@ export default function ScrollVideoExperience() {
 
   // On mobile: drive frame from native scroll (so Safari minimizes UI and scroll feels correct)
   useEffect(() => {
-    if (!isMobile || !isReady) return;
+    if (isMobile !== true || !isReady) return;
     const unsub = scrollYProgress.on('change', (v) => {
       targetFrameRef.current = v * (TOTAL_FRAMES - 1);
     });
@@ -888,10 +885,10 @@ export default function ScrollVideoExperience() {
     return () => window.removeEventListener('resize', onResize);
   }, [setupCanvas]);
 
-  const scrollHeight = `${(TOTAL_FRAMES / 60) * 100 * (isMobile ? MOBILE_SCROLL_HEIGHT_MULTIPLIER : 1)}vh`;
+  const scrollHeight = `${(TOTAL_FRAMES / 60) * 100}vh`; // Mobile override in CSS (.home-scroll-container) for correct height from first paint
 
   return (
-    <div ref={containerRef} className="relative" style={{ height: scrollHeight }}>
+    <div ref={containerRef} className="home-scroll-container relative" style={{ height: scrollHeight }}>
       {/* Canvas */}
       <canvas
         ref={canvasRef}

@@ -595,6 +595,16 @@ canvas {
   animation: particle-dissolve 2s ease-out forwards;
 }
 
+/* Home scroll container: taller on mobile so scroll is slower and Safari can minimize UI (native scroll) */
+.home-scroll-container {
+  /* Base height set in component; mobile override below */
+}
+@media (max-width: 767px) {
+  .home-scroll-container {
+    height: 1400vh !important; /* 800 * 1.75 = slower scroll, no skipped content */
+  }
+}
+
 /* ========== Mobile only (screens under 768px) – desktop unchanged ========== */
 @media (max-width: 767px) {
   /* Opaque black top bar only on home page (mobile) */
