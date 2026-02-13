@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Manrope } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { LanguageProvider } from "@/src/contexts/language-context"
@@ -44,6 +44,12 @@ export const metadata: Metadata = {
     ],
     apple: "/Futura-Icon2.png",
   },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover", // Helps Safari use full screen and minimize browser UI on scroll
 }
 
 export default function RootLayout({

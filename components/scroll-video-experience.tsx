@@ -33,6 +33,9 @@ const INITIAL_FRAMES = 150; // Target: 150 frames for "smooth from start" (fille
 const MIN_FRAMES_FOR_SMOOTH = 40; // Smooth from first frame we show
 const PRIORITY_FILL_END = 150; // Fill 0-150 in 5s = one frame per position for first ~31% (achievable in 5s)
 
+// Mobile: slower scroll so users don't skip content (taller scroll = more finger movement per section)
+const MOBILE_SCROLL_HEIGHT_MULTIPLIER = 1.75;
+
 // Section timing - User specified
 const SECTIONS = {
   hero: { start: 0, end: 0.145 },
@@ -228,6 +231,7 @@ export default function ScrollVideoExperience() {
   const [loadedCount, setLoadedCount] = useState(0);
   const [isSmoothReady, setIsSmoothReady] = useState(false); // True when enough frames for smooth scrolling
   const [showQualityIndicator, setShowQualityIndicator] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const currentFrameRef = useRef(0);
   const targetFrameRef = useRef(0);
@@ -771,16 +775,29 @@ export default function ScrollVideoExperience() {
     }
   }, [isReady]);
 
-  // Lenis smooth scroll - optimized for smoothness
+  // Detect mobile for slower scroll + native scroll (so Safari minimizes browser UI)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = () => setIsMobile(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Lenis smooth scroll on desktop; on mobile use native scroll so Safari minimizes UI
   useEffect(() => {
     if (!isReady) return;
+    if (isMobile) {
+      lenisRef.current = null;
+      return;
+    }
 
     const lenis = new Lenis({
-      lerp: isSmoothReady ? 0.14 : 0.1, // Snappier scroll = video feels more responsive from start
+      lerp: isSmoothReady ? 0.14 : 0.1,
       smoothWheel: true,
       syncTouch: true,
-      duration: 1.5, // Longer duration for smoother feel
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth easing
+      duration: 1.5,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothTouch: false,
@@ -793,7 +810,16 @@ export default function ScrollVideoExperience() {
     });
 
     return () => lenis.destroy();
-  }, [isReady, isSmoothReady]);
+  }, [isReady, isSmoothReady, isMobile]);
+
+  // On mobile: drive frame from native scroll (so Safari minimizes UI and scroll feels correct)
+  useEffect(() => {
+    if (!isMobile || !isReady) return;
+    const unsub = scrollYProgress.on('change', (v) => {
+      targetFrameRef.current = v * (TOTAL_FRAMES - 1);
+    });
+    return unsub;
+  }, [isMobile, isReady, scrollYProgress]);
 
   // When mobile menu is open: stop Lenis so home page cannot scroll behind the menu
   useEffect(() => {
@@ -862,7 +888,7 @@ export default function ScrollVideoExperience() {
     return () => window.removeEventListener('resize', onResize);
   }, [setupCanvas]);
 
-  const scrollHeight = `${(TOTAL_FRAMES / 60) * 100}vh`;
+  const scrollHeight = `${(TOTAL_FRAMES / 60) * 100 * (isMobile ? MOBILE_SCROLL_HEIGHT_MULTIPLIER : 1)}vh`;
 
   return (
     <div ref={containerRef} className="relative" style={{ height: scrollHeight }}>
