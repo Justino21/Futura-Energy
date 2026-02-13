@@ -45,7 +45,7 @@ const SECTIONS = {
 };
 
 // Mobile scroll-snap section heights (vh) – one per “magnet” so users don’t skip (sum = 800)
-const MOBILE_SNAP_HEIGHTS_VH = [120, 152, 112, 128, 152, 136];
+const MOBILE_SNAP_HEIGHTS_VH = [116, 156, 48, 64, 32, 96, 64, 88, 136];
 
 // Ultra-smooth spring config
 const SMOOTH_SPRING = { stiffness: 40, damping: 20, mass: 1.2 };
