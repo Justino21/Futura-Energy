@@ -64,6 +64,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Favicon first so browser always finds it (Futura-Icon2.png from public) */}
+        <link rel="shortcut icon" href="/Futura-Icon2.png" type="image/png" />
+        <link rel="icon" type="image/png" href="/Futura-Icon2.png" />
+        <link rel="apple-touch-icon" href="/Futura-Icon2.png" />
         {/* Google Tag Manager */}
         <script
           dangerouslySetInnerHTML={{
@@ -91,9 +95,6 @@ gtag('config', 'G-GXCSFJLNXR');
           }}
         />
         {/* End Google Analytics */}
-        {/* Favicon + share image: Futura-Icon2.png (explicit so tab + shared links always use it) */}
-        <link rel="icon" type="image/png" href="/Futura-Icon2.png" />
-        <link rel="apple-touch-icon" href="/Futura-Icon2.png" />
         <meta property="og:image" content={ICON_URL} />
         <meta name="twitter:image" content={ICON_URL} />
         {/* Preload first frame for instant home scroll (when using pre-exported frames) */}
