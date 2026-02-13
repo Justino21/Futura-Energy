@@ -608,17 +608,12 @@ canvas {
     min-height: -webkit-fill-available;
     height: 100dvh;
   }
-  /* Scroll-snap magnets so users don’t skip text sections */
+  /* Mobile: no CSS scroll-snap – JS does one smooth snap (delayed, long ease-out) so it’s not snappy */
   body.page-home {
-    scroll-snap-type: y mandatory;
-    -webkit-scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling: touch;
   }
   body.page-home .home-snap-section {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    -webkit-scroll-snap-align: start;
-    -webkit-scroll-snap-stop: always;
+    /* no scroll-snap on mobile; section height defines slower scroll (118vh each) */
   }
 
   /* Opaque black top bar only on home page (mobile) */

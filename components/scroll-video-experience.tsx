@@ -49,8 +49,12 @@ const NUM_SECTIONS = 8;
 const SECTION_HEIGHT_VH = 100;
 const SNAP_DURATION = 0.8;
 const SNAP_EASE_OUT = (t: number) => 1 - Math.pow(1 - t, 3);
-const MOBILE_SNAP_DURATION_MS = 520;
 const WHEEL_THRESHOLD = 25;
+// Mobile: slower scroll (taller sections) + one JS-controlled smooth snap (no CSS snap)
+const MOBILE_SECTION_HEIGHT_VH = 118;
+const MOBILE_SNAP_DELAY_MS = 220;
+const MOBILE_SNAP_DURATION_MS = 720;
+const MOBILE_SNAP_THRESHOLD_PX = 22;
 
 // Ultra-smooth spring config
 const SMOOTH_SPRING = { stiffness: 40, damping: 20, mass: 1.2 };
@@ -845,27 +849,27 @@ export default function ScrollVideoExperience() {
   }, [isReady]);
 
   // Section index from scroll (0..NUM_SECTIONS-1) and scroll to section (shared for snap + wheel)
-  const getContainerBounds = useCallback(() => {
+  const getContainerBounds = useCallback((forMobile?: boolean | null) => {
     if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
     const containerTop = rect.top + window.scrollY;
     const wh = window.innerHeight;
-    return { containerTop, wh };
+    const sectionHeightPx = wh * (forMobile === true ? MOBILE_SECTION_HEIGHT_VH / 100 : 1);
+    return { containerTop, wh, sectionHeightPx };
   }, []);
 
   const getCurrentSectionIndex = useCallback(() => {
-    const b = getContainerBounds();
+    const b = getContainerBounds(isMobile);
     if (!b) return 0;
     const scrollY = window.scrollY;
-    const sectionPx = b.wh;
-    const raw = (scrollY - b.containerTop) / sectionPx;
+    const raw = (scrollY - b.containerTop) / b.sectionHeightPx;
     return Math.max(0, Math.min(NUM_SECTIONS - 1, Math.round(raw)));
-  }, [getContainerBounds]);
+  }, [getContainerBounds, isMobile]);
 
   const scrollToSectionIndex = useCallback((index: number) => {
-    const b = getContainerBounds();
+    const b = getContainerBounds(isMobile);
     if (!b) return;
-    const targetY = b.containerTop + index * b.wh;
+    const targetY = b.containerTop + index * b.sectionHeightPx;
     isSnappingRef.current = true;
     if (isMobile === true) {
       const startY = window.scrollY;
@@ -897,7 +901,7 @@ export default function ScrollVideoExperience() {
   // Snap to nearest section when scroll settles (desktop + mobile)
   useEffect(() => {
     if (!isReady || !containerRef.current || isMobile === null) return;
-    const SCROLL_END_MS = 120;
+    const delayMs = isMobile === true ? MOBILE_SNAP_DELAY_MS : 120;
     let t: ReturnType<typeof setTimeout> | null = null;
     const scheduleSnap = () => {
       if (isSnappingRef.current) return;
@@ -905,14 +909,14 @@ export default function ScrollVideoExperience() {
       t = setTimeout(() => {
         t = null;
         const idx = getCurrentSectionIndex();
-        const b = getContainerBounds();
+        const b = getContainerBounds(isMobile);
         if (!b) return;
         const currentY = window.scrollY;
-        const targetY = b.containerTop + idx * b.wh;
-        const threshold = isMobile === true ? 18 : 8;
+        const targetY = b.containerTop + idx * b.sectionHeightPx;
+        const threshold = isMobile === true ? MOBILE_SNAP_THRESHOLD_PX : 8;
         if (Math.abs(currentY - targetY) < threshold) return;
         scrollToSectionIndex(idx);
-      }, SCROLL_END_MS);
+      }, delayMs);
     };
     if (isMobile === true) {
       window.addEventListener('scroll', scheduleSnap, { passive: true });
@@ -1030,7 +1034,7 @@ export default function ScrollVideoExperience() {
         <div
           key={i}
           className="home-snap-section flex-shrink-0"
-          style={{ height: `${SECTION_HEIGHT_VH}vh` }}
+          style={{ height: `${isMobile === true ? MOBILE_SECTION_HEIGHT_VH : SECTION_HEIGHT_VH}vh` }}
           aria-hidden
         />
       ))}
