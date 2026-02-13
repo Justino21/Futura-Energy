@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
+import Script from "next/script"
 import { Manrope } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { LanguageProvider } from "@/src/contexts/language-context"
@@ -71,28 +72,26 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           }}
         />
         {/* End Google Tag Manager */}
-        {/* Google Analytics (gtag.js) */}
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-GXCSFJLNXR"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-GXCSFJLNXR');
-            `,
-          }}
-        />
-        {/* End Google Analytics */}
         {/* Preload first frame for instant home scroll (when using pre-exported frames) */}
         <link rel="preload" as="image" href="/frames/frame_001.jpg" />
         {/* Fallback: preload video when using video-based extraction */}
         <link rel="preload" as="video" href="/Futura_Home_Final.mp4" />
       </head>
       <body className={`${manrope.variable} font-sans antialiased`}>
+        {/* Google Analytics (gtag.js) - beforeInteractive so Google detects the tag */}
+        <Script
+          id="gtag-loader"
+          strategy="beforeInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-GXCSFJLNXR"
+        />
+        <Script id="gtag-config" strategy="beforeInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-GXCSFJLNXR');
+          `}
+        </Script>
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe
