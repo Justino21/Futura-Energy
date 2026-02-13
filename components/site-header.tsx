@@ -84,12 +84,12 @@ export function SiteHeader() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-8 py-3">
         <Link href="/" className="flex items-center h-full">
           <img
-            src="/Futura_New.png"
+            src="/Futura_Ultimate.png"
             alt="Futura Energy"
             className="h-14 w-auto max-w-[100px] object-contain"
             onError={(e) => {
               const el = e.currentTarget;
-              if (el.src.endsWith('Futura_New.png')) {
+              if (el.src.endsWith('Futura_Ultimate.png')) {
                 el.src = '/futura-logo.png';
               }
             }}
@@ -176,12 +176,12 @@ export function SiteHeader() {
             <div className="flex flex-col flex-1 min-h-0 overflow-auto pt-[4.5rem] pb-10 px-5">
               <div className="flex justify-center mb-10 shrink-0">
                 <img
-                src="/Futura_New.png"
+                src="/Futura_Ultimate.png"
                 alt="Futura Energy"
                 className="h-10 w-auto max-w-[80px] object-contain"
                 onError={(e) => {
                   const el = e.currentTarget;
-                  if (el.src.endsWith('Futura_New.png')) {
+                  if (el.src.endsWith('Futura_Ultimate.png')) {
                     el.src = '/futura-logo.png';
                   }
                 }}
