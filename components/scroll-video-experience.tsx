@@ -47,6 +47,12 @@ const SECTIONS = {
 // Mobile scroll-snap section heights (vh) – one per “magnet” so users don’t skip (sum = 800)
 const MOBILE_SNAP_HEIGHTS_VH = [116, 156, 48, 64, 32, 96, 64, 88, 136];
 
+// Direct stops: scroll decelerates and lands on these (desktop + mobile)
+const SECTION_STOPS = [0, 0.145, 0.25, 0.44, 0.58, 0.775, 0.93, 1];
+const SNAP_DURATION = 0.85;
+const SNAP_EASE_OUT = (t: number) => 1 - Math.pow(1 - t, 3);
+const SNAP_PROXIMITY = 0.008;
+
 // Ultra-smooth spring config
 const SMOOTH_SPRING = { stiffness: 40, damping: 20, mass: 1.2 };
 
@@ -240,6 +246,7 @@ export default function ScrollVideoExperience() {
   const isExtractingRef = useRef(false);
   const pageShownRef = useRef(false);
   const smoothRangeEndRef = useRef(LERP_INSTANT_RANGE); // instant lerp up to this frame (set when we show)
+  const isSnappingRef = useRef(false);
 
   // Pre-exported: frame 0 is preloaded in layout. Video path: video preloaded in layout.
   const loadSingleFrameImage = useCallback((index: number): Promise<HTMLImageElement | null> => {
@@ -837,6 +844,104 @@ export default function ScrollVideoExperience() {
     obs.observe(body, { attributes: true, attributeFilter: ['class'] });
     return () => obs.disconnect();
   }, [isReady]);
+
+  // Section stops: when scroll settles, decelerate smoothly to nearest section (desktop + mobile)
+  useEffect(() => {
+    if (!isReady || !containerRef.current || isMobile === null) return;
+
+    const container = containerRef.current;
+    const getBounds = () => {
+      const rect = container.getBoundingClientRect();
+      const containerTop = rect.top + window.scrollY;
+      const containerHeight = container.offsetHeight;
+      const maxScroll = Math.max(0, containerHeight - window.innerHeight);
+      return { containerTop, containerHeight, maxScroll };
+    };
+
+    const progressFromScroll = (scrollY: number) => {
+      const { containerTop, maxScroll } = getBounds();
+      if (maxScroll <= 0) return 0;
+      return Math.max(0, Math.min(1, (scrollY - containerTop) / maxScroll));
+    };
+
+    const targetScrollYFromProgress = (progress: number) => {
+      const { containerTop, maxScroll } = getBounds();
+      return containerTop + progress * maxScroll;
+    };
+
+    const findNearestStop = (progress: number) => {
+      let nearest = SECTION_STOPS[0];
+      let best = Math.abs(progress - nearest);
+      for (const s of SECTION_STOPS) {
+        const d = Math.abs(progress - s);
+        if (d < best) {
+          best = d;
+          nearest = s;
+        }
+      }
+      return nearest;
+    };
+
+    const SCROLL_END_MS = 140;
+    let scrollEndTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const trySnapToSection = () => {
+      if (isSnappingRef.current) return;
+      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+      const progress = progressFromScroll(scrollY);
+      const nearest = findNearestStop(progress);
+      if (Math.abs(progress - nearest) < SNAP_PROXIMITY) return;
+      const targetY = targetScrollYFromProgress(nearest);
+      isSnappingRef.current = true;
+
+      if (isMobile === true) {
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
+        setTimeout(() => {
+          isSnappingRef.current = false;
+        }, 400);
+        return;
+      }
+
+      const lenis = lenisRef.current;
+      if (lenis) {
+        lenis.scrollTo(targetY, {
+          duration: SNAP_DURATION,
+          easing: SNAP_EASE_OUT,
+          onComplete: () => {
+            isSnappingRef.current = false;
+          },
+        });
+      } else {
+        isSnappingRef.current = false;
+      }
+    };
+
+    const scheduleSnap = () => {
+      if (isSnappingRef.current) return;
+      if (scrollEndTimer) clearTimeout(scrollEndTimer);
+      scrollEndTimer = setTimeout(() => {
+        scrollEndTimer = null;
+        trySnapToSection();
+      }, SCROLL_END_MS);
+    };
+
+    if (isMobile === true) {
+      const onScroll = () => scheduleSnap();
+      window.addEventListener('scroll', onScroll, { passive: true });
+      return () => {
+        window.removeEventListener('scroll', onScroll);
+        if (scrollEndTimer) clearTimeout(scrollEndTimer);
+      };
+    }
+
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+    const unsub = lenis.on('scroll', () => scheduleSnap());
+    return () => {
+      unsub();
+      if (scrollEndTimer) clearTimeout(scrollEndTimer);
+    };
+  }, [isReady, isMobile]);
 
   // Render loop - optimized for 60fps smoothness
   useEffect(() => {
