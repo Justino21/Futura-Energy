@@ -84,7 +84,7 @@ export function SiteHeader() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-8 py-3">
         <Link href="/" className="flex items-center h-full">
           <img
-            src="/futura-logo.png"
+            src="/Futura_New.png"
             alt="Futura Energy"
             className="h-14 w-auto max-w-[100px] object-contain"
           />
@@ -169,7 +169,7 @@ export function SiteHeader() {
             </button>
             <div className="flex flex-col flex-1 min-h-0 overflow-auto pt-[4.5rem] pb-10 px-5">
               <div className="flex justify-center mb-10 shrink-0">
-                <img src="/futura-logo.png" alt="Futura Energy" className="h-10 w-auto max-w-[80px] object-contain" />
+                <img src="/Futura_New.png" alt="Futura Energy" className="h-10 w-auto max-w-[80px] object-contain" />
               </div>
               <nav className="flex flex-col gap-0.5 shrink-0">
                 {navigationItems.map((item) => (
