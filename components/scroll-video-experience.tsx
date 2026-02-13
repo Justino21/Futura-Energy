@@ -21,6 +21,7 @@ const FRAME_EXT = 'jpg';
 const getFrameSrc = (i: number) => `${FRAMES_BASE}/frame_${String(i + 1).padStart(3, '0')}.${FRAME_EXT}`;
 const LERP_FACTOR = 0.08; // For sparse frames (later in scroll)
 const LERP_INSTANT_RANGE = 150; // First 150 frames: no lerp = 1:1 scroll (perfect smooth at start)
+const MOBILE_BG_LERP = 0.1; // Mobile: always smooth background (no instant snap)
 const KEYFRAME_INTERVAL = 4; // Every 4th frame is a keyframe
 
 // APPLE-STYLE LOADING: Load keyframes strategically for fast load + smoothness
@@ -965,8 +966,13 @@ export default function ScrollVideoExperience() {
     const animate = (time: number) => {
       lenisRef.current?.raf(time);
       const target = targetFrameRef.current;
-      // Instant track for dense range (0–smoothRangeEnd) = max smooth from very beginning
-      const lerpFactor = target <= smoothRangeEndRef.current ? 1 : LERP_FACTOR;
+      // Mobile: always smooth lerp so background isn't snappy; desktop: instant for first range then lerp
+      const lerpFactor =
+        isMobile === true
+          ? MOBILE_BG_LERP
+          : target <= smoothRangeEndRef.current
+            ? 1
+            : LERP_FACTOR;
       currentFrameRef.current = lerp(currentFrameRef.current, target, lerpFactor);
       
       const frameIdx = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.floor(currentFrameRef.current)));
@@ -987,7 +993,7 @@ export default function ScrollVideoExperience() {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [isReady, drawFrame, findFrame]);
+  }, [isReady, isMobile, drawFrame, findFrame]);
 
   // Resize handler
   useEffect(() => {
