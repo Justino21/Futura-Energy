@@ -78,9 +78,9 @@ export default function ParticleLogo({ scrollProgress, onComplete, onLogoFormed 
         const spacing = 2 // Closer spacing for more particles - clearer logo
         const particleDensity = 0.85 // 85% of grid points become particles (was 70%)
 
-        // Load logo image to sample pixels
+        // Load logo image to sample pixels (Futura_Ultimate.png from public)
         const logoImg = new Image()
-        logoImg.src = '/futura-logo.png'
+        logoImg.src = '/Futura_Ultimate.png'
       
       // Load world map data for accurate starting positions
       // Use timeout and retry logic for consistent loading

@@ -1447,7 +1447,7 @@ export default function ScrollVideoExperience() {
             className="mb-8"
           >
             <img 
-              src="/futura-logo.png" 
+              src="/Futura_Ultimate.png" 
               alt="Futura Energy" 
               className="w-auto h-16 md:h-20 object-contain"
             />
