@@ -40,14 +40,7 @@ export const metadata: Metadata = {
       "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
     images: [ICON_URL],
   },
-  icons: {
-    icon: [
-      { url: "/Futura-Icon2.png", type: "image/png", sizes: "32x32" },
-      { url: "/Futura-Icon2.png", type: "image/png", sizes: "64x64", media: "(prefers-color-scheme: light)" },
-      { url: "/Futura-Icon2.png", type: "image/png", sizes: "64x64", media: "(prefers-color-scheme: dark)" },
-    ],
-    apple: "/Futura-Icon2.png",
-  },
+  // Favicon & apple-touch-icon come from app/icon.png & app/apple-icon.png (always deployed with build)
 }
 
 export const viewport: Viewport = {
@@ -64,10 +57,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Favicon first so browser always finds it (Futura-Icon2.png from public) */}
-        <link rel="shortcut icon" href="/Futura-Icon2.png" type="image/png" />
-        <link rel="icon" type="image/png" href="/Futura-Icon2.png" />
-        <link rel="apple-touch-icon" href="/Futura-Icon2.png" />
+        {/* Favicon & apple-touch-icon are served by Next from app/icon.png & app/apple-icon.png */}
         {/* Google Tag Manager */}
         <script
           dangerouslySetInnerHTML={{
