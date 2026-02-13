@@ -71,6 +71,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           }}
         />
         {/* End Google Tag Manager */}
+        {/* Google Analytics (gtag.js) */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-GXCSFJLNXR"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-GXCSFJLNXR');
+            `,
+          }}
+        />
+        {/* End Google Analytics */}
         {/* Preload first frame for instant home scroll (when using pre-exported frames) */}
         <link rel="preload" as="image" href="/frames/frame_001.jpg" />
         {/* Fallback: preload video when using video-based extraction */}
