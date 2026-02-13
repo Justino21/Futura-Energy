@@ -44,6 +44,9 @@ const SECTIONS = {
   footnote: { start: 0.90, end: 1.0, noFadeOut: true },
 };
 
+// Mobile scroll-snap section heights (vh) – one per “magnet” so users don’t skip (sum = 800)
+const MOBILE_SNAP_HEIGHTS_VH = [120, 152, 112, 128, 152, 136];
+
 // Ultra-smooth spring config
 const SMOOTH_SPRING = { stiffness: 40, damping: 20, mass: 1.2 };
 
@@ -885,14 +888,23 @@ export default function ScrollVideoExperience() {
     return () => window.removeEventListener('resize', onResize);
   }, [setupCanvas]);
 
-  const scrollHeight = `${(TOTAL_FRAMES / 60) * 100}vh`; // Mobile override in CSS (.home-scroll-container) for correct height from first paint
+  const scrollHeight = `${(TOTAL_FRAMES / 60) * 100}vh`;
 
   return (
-    <div ref={containerRef} className="home-scroll-container relative" style={{ height: scrollHeight }}>
+    <div
+      ref={containerRef}
+      className="home-scroll-container relative"
+      style={{
+        height: scrollHeight,
+        ...(isMobile === true
+          ? { display: 'flex', flexDirection: 'column', height: 'auto' }
+          : {}),
+      }}
+    >
       {/* Canvas */}
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 bg-black"
+        className="fixed inset-0 bg-black home-canvas-fill"
         style={{ 
           willChange: 'transform', 
           transform: 'translateZ(0)', 
@@ -910,6 +922,17 @@ export default function ScrollVideoExperience() {
 
       {/* Mobile-only glass overlay for home (readability) – styled in globals.css @media (max-width: 767px) */}
       <div className="mobile-home-glass" aria-hidden="true" />
+
+      {/* Mobile: scroll-snap magnets so users don’t skip sections */}
+      {isMobile === true &&
+        MOBILE_SNAP_HEIGHTS_VH.map((h, i) => (
+          <div
+            key={i}
+            className="home-snap-section flex-shrink-0"
+            style={{ height: `${h}vh` }}
+            aria-hidden
+          />
+        ))}
 
       {/* ========== HERO ========== */}
       <Section scrollProgress={scrollYProgress} start={SECTIONS.hero.start} end={SECTIONS.hero.end} align="top-left">

@@ -595,18 +595,29 @@ canvas {
   animation: particle-dissolve 2s ease-out forwards;
 }
 
-/* Home scroll container: taller on mobile so scroll is slower and Safari can minimize UI (native scroll) */
-.home-scroll-container {
-  /* Base height set in component; mobile override below */
-}
-@media (max-width: 767px) {
-  .home-scroll-container {
-    height: 1400vh !important; /* 800 * 1.75 = slower scroll, no skipped content */
-  }
-}
-
 /* ========== Mobile only (screens under 768px) – desktop unchanged ========== */
 @media (max-width: 767px) {
+  /* Home page: black background so when Safari minimizes UI, revealed area shows home (not white) */
+  body.page-home,
+  html:has(body.page-home) {
+    background: #000 !important;
+  }
+  /* Fixed canvas fills dynamic viewport so no white gap when Safari UI minimizes */
+  body.page-home .home-canvas-fill {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    height: 100dvh;
+  }
+  /* Scroll-snap magnets so users don’t skip text sections */
+  body.page-home {
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.page-home .home-snap-section {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
   /* Opaque black top bar only on home page (mobile) */
   .site-header-home {
     background: #000 !important;
