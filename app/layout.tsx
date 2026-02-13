@@ -14,8 +14,11 @@ const manrope = Manrope({
   variable: "--font-sans",
 })
 
+const SITE_URL = "https://www.futuranrg.com"
+const ICON_URL = `${SITE_URL}/Futura-Icon2.png`
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.futuranrg.com"),
+  metadataBase: new URL(SITE_URL),
   title: "Futura Energy | Global Energy Trading",
   description:
     "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
@@ -24,9 +27,9 @@ export const metadata: Metadata = {
     title: "Futura Energy | Global Energy Trading",
     description:
       "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
-    url: "https://www.futuranrg.com",
+    url: SITE_URL,
     siteName: "Futura Energy",
-    images: [{ url: "/Futura-Icon2.png", width: 512, height: 512, alt: "Futura Energy" }],
+    images: [{ url: ICON_URL, width: 512, height: 512, alt: "Futura Energy" }],
     locale: "en_US",
     type: "website",
   },
@@ -35,7 +38,7 @@ export const metadata: Metadata = {
     title: "Futura Energy | Global Energy Trading",
     description:
       "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
-    images: ["/Futura-Icon2.png"],
+    images: [ICON_URL],
   },
   icons: {
     icon: [
@@ -88,6 +91,11 @@ gtag('config', 'G-GXCSFJLNXR');
           }}
         />
         {/* End Google Analytics */}
+        {/* Favicon + share image: Futura-Icon2.png (explicit so tab + shared links always use it) */}
+        <link rel="icon" type="image/png" href="/Futura-Icon2.png" />
+        <link rel="apple-touch-icon" href="/Futura-Icon2.png" />
+        <meta property="og:image" content={ICON_URL} />
+        <meta name="twitter:image" content={ICON_URL} />
         {/* Preload first frame for instant home scroll (when using pre-exported frames) */}
         <link rel="preload" as="image" href="/frames/frame_001.jpg" />
         {/* Fallback: preload video when using video-based extraction */}
