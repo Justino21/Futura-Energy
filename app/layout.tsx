@@ -15,7 +15,7 @@ const manrope = Manrope({
 })
 
 const SITE_URL = "https://www.futuranrg.com"
-const PREVIEW_IMAGE_URL = `${SITE_URL}/Futura_Preview.png`
+const PREVIEW_IMAGE_URL = `${SITE_URL}/Futura_Link.png`
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
