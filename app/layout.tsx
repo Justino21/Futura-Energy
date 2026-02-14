@@ -15,7 +15,7 @@ const manrope = Manrope({
 })
 
 const SITE_URL = "https://www.futuranrg.com"
-const ICON_URL = `${SITE_URL}/Futura-Icon2.png`
+const PREVIEW_IMAGE_URL = `${SITE_URL}/Futura_Preview.png`
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
       "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
     url: SITE_URL,
     siteName: "Futura Energy",
-    images: [{ url: ICON_URL, width: 512, height: 512, alt: "Futura Energy" }],
+    images: [{ url: PREVIEW_IMAGE_URL, width: 1200, height: 630, alt: "Futura Energy" }],
     locale: "en_US",
     type: "website",
   },
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     title: "Futura Energy | Global Energy Trading",
     description:
       "International energy trading group. Crude oil and refined product trading across Europe, Africa, Middle East and Latin America.",
-    images: [ICON_URL],
+    images: [PREVIEW_IMAGE_URL],
   },
   // Favicon & apple-touch-icon come from app/icon.png & app/apple-icon.png (always deployed with build)
 }
@@ -85,10 +85,14 @@ gtag('config', 'G-GXCSFJLNXR');
           }}
         />
         {/* End Google Analytics */}
-        <meta property="og:image" content={ICON_URL} />
-        <meta name="twitter:image" content={ICON_URL} />
-        {/* Preload first frame for instant home scroll (when using pre-exported frames) */}
-        <link rel="preload" as="image" href="/frames/frame_001.jpg" />
+        <meta property="og:image" content={PREVIEW_IMAGE_URL} />
+        <meta name="twitter:image" content={PREVIEW_IMAGE_URL} />
+        {/* Hero frames: high-priority preload for instant load on mobile (home scroll) */}
+        <link rel="preload" as="image" href="/frames/frame_001.jpg" fetchPriority="high" />
+        <link rel="preload" as="image" href="/frames/frame_002.jpg" />
+        <link rel="preload" as="image" href="/frames/frame_003.jpg" />
+        <link rel="preload" as="image" href="/frames/frame_004.jpg" />
+        <link rel="preload" as="image" href="/frames/frame_005.jpg" />
         {/* Fallback: preload video when using video-based extraction */}
         <link rel="preload" as="video" href="/Futura_Home_Final.mp4" />
       </head>

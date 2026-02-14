@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback, memo } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, useCallback, memo } from 'react';
 import { motion, useScroll, useTransform, useSpring, MotionValue } from 'framer-motion';
 import Lenis from 'lenis';
 import { useRouter } from 'next/navigation';
@@ -261,6 +261,14 @@ export default function ScrollVideoExperience() {
       img.onerror = () => resolve(null);
       img.src = getFrameSrc(index);
     });
+  }, []);
+
+  // Mobile: start requesting first frame immediately on mount (hits preload cache for instant show)
+  useLayoutEffect(() => {
+    if (!USE_PREEXPORTED_FRAMES) return;
+    const img = new Image();
+    img.fetchPriority = 'high';
+    img.src = getFrameSrc(0);
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -629,7 +637,7 @@ export default function ScrollVideoExperience() {
       return () => { if (fallbackTimer) clearTimeout(fallbackTimer); };
     }
 
-    const maxWaitMs = 5000;
+    const maxWaitMs = (typeof window !== 'undefined' && window.innerWidth < 768) ? 2000 : 5000;
     const maxWaitTimer = setTimeout(() => {
       if (pageShownRef.current) return;
       pageShownRef.current = true;
