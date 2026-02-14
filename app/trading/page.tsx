@@ -355,6 +355,8 @@ export default function TradingPage() {
             loop
             muted
             playsInline
+            preload="auto"
+            poster="/Futura_Ultimate.png"
             className="absolute inset-0 w-full h-full"
             style={{
               objectFit: 'cover',
@@ -366,6 +368,8 @@ export default function TradingPage() {
               backfaceVisibility: 'hidden',
               transform: 'translateZ(0)',
             }}
+            // @ts-expect-error fetchPriority is valid for faster mobile load
+            fetchPriority="high"
           >
             <source src="/Futura_Trade_Hero2.0.mp4" type="video/mp4" />
           </video>
