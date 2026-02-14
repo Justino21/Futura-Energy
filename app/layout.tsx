@@ -95,6 +95,8 @@ gtag('config', 'G-GXCSFJLNXR');
         <link rel="preload" as="image" href="/frames/frame_005.jpg" />
         {/* Fallback: preload video when using video-based extraction */}
         <link rel="preload" as="video" href="/Futura_Home_Final.mp4" />
+        {/* Trading page hero: preload so video can play instantly on mobile when visiting /trading */}
+        <link rel="preload" as="video" href="/Futura_Trade_Hero2.0.mp4" />
       </head>
       <body className={`${manrope.variable} font-sans antialiased`}>
         {/* Google Tag Manager (noscript) */}
