@@ -318,8 +318,29 @@ export default function TradingPage() {
   const router = useRouter()
   const { t } = useLanguage()
   const heroRef = useRef<HTMLElement>(null)
+  const heroVideoRef = useRef<HTMLVideoElement>(null)
   const statsRef = useRef<HTMLElement>(null)
   const cgiSectionRef = useRef<HTMLDivElement>(null)
+
+  // Mobile only: start hero video at 1s to skip black transition
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.innerWidth >= 768) return
+    const video = heroVideoRef.current
+    if (!video) return
+    const startAt1s = () => {
+      video.currentTime = 1
+    }
+    if (video.readyState >= 2) {
+      startAt1s()
+    } else {
+      video.addEventListener('loadeddata', startAt1s, { once: true })
+      video.addEventListener('canplay', startAt1s, { once: true })
+    }
+    return () => {
+      video.removeEventListener('loadeddata', startAt1s)
+      video.removeEventListener('canplay', startAt1s)
+    }
+  }, [])
 
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -351,6 +372,7 @@ export default function TradingPage() {
           style={{ backgroundColor: '#000' }}
         >
           <video
+            ref={heroVideoRef}
             autoPlay
             loop
             muted
