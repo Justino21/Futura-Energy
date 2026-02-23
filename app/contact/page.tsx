@@ -3,10 +3,11 @@
 import type React from "react"
 import { SiteHeader } from "@/components/site-header"
 import { motion } from "framer-motion"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { ChevronDown, Search } from "lucide-react"
 import { useLanguage } from "@/src/contexts/language-context"
 import { PHONE_PREFIX_OPTIONS } from "@/src/data/country-calling-codes"
+import TurnstileCaptcha from "@/components/turnstile-captcha"
 
 const DEPARTMENT_OPTIONS = [
   { value: "trading@futuranrg.com", labelKey: "contactPage.deptTradingDesk" },
@@ -26,8 +27,9 @@ export default function ContactPage() {
     phone: "",
     message: "",
   })
-  const [fieldErrors, setFieldErrors] = useState<{ name?: boolean; surname?: boolean; email?: boolean; terms?: boolean }>({})
+  const [fieldErrors, setFieldErrors] = useState<{ name?: boolean; surname?: boolean; email?: boolean; terms?: boolean; captcha?: boolean }>({})
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("")
@@ -78,18 +80,33 @@ export default function ContactPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  const handleCaptchaVerify = useCallback((token: string) => {
+    setCaptchaToken(token)
+    setFieldErrors((prev) => ({ ...prev, captcha: false }))
+  }, [])
+
+  const handleCaptchaError = useCallback(() => {
+    setCaptchaToken(null)
+  }, [])
+
+  const handleCaptchaExpire = useCallback(() => {
+    setCaptchaToken(null)
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const nameEmpty = !formData.name.trim()
     const surnameEmpty = !formData.surname.trim()
     const emailEmpty = !formData.email.trim()
     const termsMissing = !acceptedTerms
-    const hasErrors = nameEmpty || surnameEmpty || emailEmpty || termsMissing
+    const captchaMissing = !captchaToken
+    const hasErrors = nameEmpty || surnameEmpty || emailEmpty || termsMissing || captchaMissing
     setFieldErrors({
       name: nameEmpty,
       surname: surnameEmpty,
       email: emailEmpty,
       terms: termsMissing,
+      captcha: captchaMissing,
     })
     if (hasErrors) return
 
@@ -103,6 +120,7 @@ export default function ContactPage() {
         body: JSON.stringify({
           ...formData,
           phone: [formData.phonePrefix, formData.phone].filter(Boolean).join(" ").trim() || undefined,
+          captchaToken,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -458,6 +476,18 @@ export default function ContactPage() {
                     </label>
                     {fieldErrors.terms && (
                       <p className="text-xs text-red-400">{t("contactPage.acceptTermsError")}</p>
+                    )}
+                  </div>
+
+                  {/* CAPTCHA */}
+                  <div className="space-y-1">
+                    <TurnstileCaptcha
+                      onVerify={handleCaptchaVerify}
+                      onError={handleCaptchaError}
+                      onExpire={handleCaptchaExpire}
+                    />
+                    {fieldErrors.captcha && (
+                      <p className="text-xs text-red-400 text-center">{t("contactPage.captchaError")}</p>
                     )}
                   </div>
 

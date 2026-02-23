@@ -402,6 +402,7 @@ export const translations = {
       acceptTermsAnd: "and",
       acceptTermsSuffix: ".",
       acceptTermsError: "You must accept the terms to submit.",
+      captchaError: "Please complete the CAPTCHA verification.",
     },
     common: {
       dash: "—",
@@ -1045,6 +1046,7 @@ export const translations = {
       acceptTermsAnd: "y",
       acceptTermsSuffix: ".",
       acceptTermsError: "Debe aceptar los términos para enviar.",
+      captchaError: "Por favor complete la verificación CAPTCHA.",
     },
     common: {
       dash: "—",
@@ -2701,6 +2703,7 @@ export const translations = {
       acceptTermsAnd: "und",
       acceptTermsSuffix: " gelesen und akzeptiert.",
       acceptTermsError: "Sie müssen die Bedingungen akzeptieren, um zu senden.",
+      captchaError: "Bitte vervollständigen Sie die CAPTCHA-Verifizierung.",
     },
     common: {
       dash: "—",

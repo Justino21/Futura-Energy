@@ -1,9 +1,60 @@
 import { NextRequest, NextResponse } from "next/server"
 
 const RECIPIENT_EMAIL = "info@futuranrg.com"
+const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+async function verifyCaptcha(token: string): Promise<boolean> {
+  const secretKey = process.env.TURNSTILE_SECRET_KEY
+  if (!secretKey) {
+    console.warn("TURNSTILE_SECRET_KEY not configured - skipping CAPTCHA verification")
+    return true
+  }
+
+  try {
+    const response = await fetch(TURNSTILE_VERIFY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        secret: secretKey,
+        response: token,
+      }),
+    })
+    const data = await response.json()
+    return data.success === true
+  } catch (err) {
+    console.error("CAPTCHA verification error:", err)
+    return false
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json()
+    const { department, name, surname, email, phone, message, captchaToken } = body as {
+      department?: string
+      name?: string
+      surname?: string
+      email?: string
+      phone?: string
+      message?: string
+      captchaToken?: string
+    }
+
+    if (!captchaToken) {
+      return NextResponse.json(
+        { error: "CAPTCHA verification required" },
+        { status: 400 }
+      )
+    }
+
+    const captchaValid = await verifyCaptcha(captchaToken)
+    if (!captchaValid) {
+      return NextResponse.json(
+        { error: "CAPTCHA verification failed. Please try again." },
+        { status: 400 }
+      )
+    }
+
     const apiKey = process.env.RESEND_API_KEY?.trim()
     if (!apiKey) {
       return NextResponse.json(
@@ -13,15 +64,6 @@ export async function POST(request: NextRequest) {
     }
     const { Resend } = await import("resend")
     const resend = new Resend(apiKey)
-    const body = await request.json()
-    const { department, name, surname, email, phone, message } = body as {
-      department?: string
-      name?: string
-      surname?: string
-      email?: string
-      phone?: string
-      message?: string
-    }
 
     if (!name?.trim() || !email?.trim()) {
       return NextResponse.json(
