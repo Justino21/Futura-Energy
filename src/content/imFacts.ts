@@ -80,11 +80,15 @@ export const trading = {
       type: "term",
     },
     {
-      description: "90,000–120,000 MT/month ULSD 10PPM",
+      description: "45,000 CBM/month ULSD 10PPM",
       type: "term",
     },
     {
-      description: "Gasoline supplied to National Oil Company YPFB under a term agreement",
+      description: "Gasoline 45,000 CBM/month supplied to National Oil Company YPFB under a term agreement",
+      type: "term",
+    },
+    {
+      description: "Jet A1 3,500 CBM/month (43% market share)",
       type: "term",
     },
   ],
