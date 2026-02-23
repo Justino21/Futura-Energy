@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 declare global {
   interface Window {
@@ -19,6 +19,7 @@ declare global {
       reset: (widgetId: string) => void
       remove: (widgetId: string) => void
     }
+    onTurnstileLoad?: () => void
   }
 }
 
@@ -28,64 +29,108 @@ interface TurnstileCaptchaProps {
   onExpire?: () => void
 }
 
+const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
+
 export default function TurnstileCaptcha({ onVerify, onError, onExpire }: TurnstileCaptchaProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
-  const scriptLoadedRef = useRef(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const renderWidget = useCallback(() => {
-    if (!containerRef.current || !window.turnstile || widgetIdRef.current) return
-
-    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
-    if (!siteKey) {
-      console.warn('Turnstile site key not configured')
+  useEffect(() => {
+    if (!SITE_KEY) {
+      console.error('NEXT_PUBLIC_TURNSTILE_SITE_KEY is not configured')
+      setIsLoading(false)
       return
     }
 
-    widgetIdRef.current = window.turnstile.render(containerRef.current, {
-      sitekey: siteKey,
-      callback: onVerify,
-      'error-callback': onError,
-      'expired-callback': onExpire,
-      theme: 'dark',
-      size: 'normal',
-    })
-  }, [onVerify, onError, onExpire])
+    const renderWidget = () => {
+      if (!containerRef.current || !window.turnstile) return
+      if (widgetIdRef.current) return
 
-  useEffect(() => {
-    if (scriptLoadedRef.current) {
+      try {
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: SITE_KEY,
+          callback: (token: string) => {
+            onVerify(token)
+          },
+          'error-callback': () => {
+            onError?.()
+          },
+          'expired-callback': () => {
+            onExpire?.()
+          },
+          theme: 'dark',
+          size: 'normal',
+        })
+        setIsLoading(false)
+      } catch (err) {
+        console.error('Turnstile render error:', err)
+        setIsLoading(false)
+      }
+    }
+
+    if (window.turnstile) {
       renderWidget()
       return
     }
 
-    const existingScript = document.querySelector('script[src*="turnstile"]')
+    const existingScript = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]')
     if (existingScript) {
-      scriptLoadedRef.current = true
-      if (window.turnstile) {
-        renderWidget()
-      } else {
-        existingScript.addEventListener('load', renderWidget)
-      }
-      return
+      const checkTurnstile = setInterval(() => {
+        if (window.turnstile) {
+          clearInterval(checkTurnstile)
+          renderWidget()
+        }
+      }, 100)
+      setTimeout(() => clearInterval(checkTurnstile), 10000)
+      return () => clearInterval(checkTurnstile)
     }
 
     const script = document.createElement('script')
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
     script.async = true
-    script.defer = true
     script.onload = () => {
-      scriptLoadedRef.current = true
-      renderWidget()
+      const checkReady = setInterval(() => {
+        if (window.turnstile) {
+          clearInterval(checkReady)
+          renderWidget()
+        }
+      }, 50)
+      setTimeout(() => clearInterval(checkReady), 5000)
+    }
+    script.onerror = () => {
+      console.error('Failed to load Turnstile script')
+      setIsLoading(false)
     }
     document.head.appendChild(script)
 
     return () => {
       if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current)
+        try {
+          window.turnstile.remove(widgetIdRef.current)
+        } catch {}
         widgetIdRef.current = null
       }
     }
-  }, [renderWidget])
+  }, [onVerify, onError, onExpire])
 
-  return <div ref={containerRef} className="flex justify-center" />
+  if (!SITE_KEY) {
+    return (
+      <div className="text-center text-yellow-400 text-sm py-2">
+        CAPTCHA not configured
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex justify-center min-h-[65px]">
+      {isLoading && (
+        <div className="flex items-center gap-2 text-white/50 text-sm">
+          <div className="w-4 h-4 border-2 border-white/30 border-t-white/80 rounded-full animate-spin" />
+          Loading verification...
+        </div>
+      )}
+      <div ref={containerRef} className={isLoading ? 'hidden' : ''} />
+    </div>
+  )
 }
