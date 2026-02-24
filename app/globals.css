@@ -613,7 +613,7 @@ canvas {
     -webkit-overflow-scrolling: touch;
   }
   body.page-home .home-snap-section {
-    /* no scroll-snap on mobile; section height defines slower scroll (118vh each) */
+    /* JS handles section snapping - each section is 100vh */
   }
 
   /* Opaque black top bar only on home page (mobile) */

@@ -69,19 +69,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           }}
         />
         {/* End Google Tag Manager */}
-        {/* Google Analytics (gtag.js) - exact snippet in head so Google detects the tag */}
+        {/* Google tag (gtag.js) - GA4 */}
         <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-GXCSFJLNXR"
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-window.dataLayer = window.dataLayer || [];
+            __html: `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', 'G-GXCSFJLNXR');
-            `.trim(),
+gtag('config', 'G-GXCSFJLNXR');`,
           }}
         />
         {/* End Google Analytics */}
