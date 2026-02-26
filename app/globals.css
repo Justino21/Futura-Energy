@@ -638,9 +638,9 @@ canvas {
     bottom: 0;
     width: 100%;
     z-index: 50;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    background: rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     pointer-events: none;
   }
 
