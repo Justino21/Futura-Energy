@@ -52,10 +52,10 @@ const SNAP_DURATION = 0.8;
 const SNAP_EASE_OUT = (t: number) => 1 - Math.pow(1 - t, 3);
 const WHEEL_THRESHOLD = 25;
 // Mobile: slower scroll (taller sections) + one JS-controlled smooth snap (no CSS snap)
-const MOBILE_SECTION_HEIGHT_VH = 100; // Exactly one viewport per section
-const MOBILE_SNAP_DURATION_MS = 600; // Smooth animation duration
-const MOBILE_SWIPE_THRESHOLD_PX = 50; // Min drag to trigger section change
-const MOBILE_VELOCITY_THRESHOLD = 0.3; // Quick flick threshold (px/ms)
+const MOBILE_SECTION_HEIGHT_VH = 100;
+const MOBILE_SNAP_DURATION_MS = 450;
+const MOBILE_SNAP_DELAY_MS = 120;
+const MOBILE_SNAP_THRESHOLD_PX = 12;
 
 // Ultra-smooth spring config
 const SMOOTH_SPRING = { stiffness: 40, damping: 20, mass: 1.2 };
@@ -954,181 +954,143 @@ export default function ScrollVideoExperience() {
     return () => window.removeEventListener('wheel', onWheel);
   }, [isReady, isMobile, getCurrentSectionIndex, scrollToSectionIndex]);
 
-  // Mobile: Complete fullpage-style scroll control
-  // Captures all touch events and provides precise section-by-section navigation
+  // Mobile: Natural scrolling with smart section snapping
+  // Allows native touch scrolling but snaps to nearest section when scroll settles
   useEffect(() => {
     if (!isReady || isMobile !== true || !containerRef.current) return;
 
-    // State for tracking current section (source of truth for mobile)
-    let currentSectionIdx = getCurrentSectionIndex();
-    let touchStartY = 0;
-    let touchStartTime = 0;
-    let touchStartScrollY = 0;
-    let isTouching = false;
+    let snapTimeout: ReturnType<typeof setTimeout> | null = null;
     let animationId: number | null = null;
+    let lastScrollY = window.scrollY;
+    let scrollVelocity = 0;
+    let lastScrollTime = performance.now();
 
-    // Smooth ease-in-out-cubic for natural acceleration and deceleration
-    const easeInOutCubic = (t: number) => 
-      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    
-    // Smooth scroll to a specific section
+    // Smooth easing for snap animation
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    // Animate to target section
     const animateToSection = (targetIdx: number) => {
       const b = getContainerBounds(true);
       if (!b) return;
-      
+
       const targetY = b.containerTop + targetIdx * b.sectionHeightPx;
       const startY = window.scrollY;
-      const startTime = performance.now();
       
-      // Cancel any existing animation
+      // Skip if already very close
+      if (Math.abs(startY - targetY) < MOBILE_SNAP_THRESHOLD_PX) {
+        isSnappingRef.current = false;
+        return;
+      }
+
+      const startTime = performance.now();
+
       if (animationId !== null) {
         cancelAnimationFrame(animationId);
       }
-      
+
       isSnappingRef.current = true;
-      currentSectionIdx = targetIdx;
-      
+
       const animate = (now: number) => {
         const elapsed = now - startTime;
         const progress = Math.min(1, elapsed / MOBILE_SNAP_DURATION_MS);
-        const eased = easeInOutCubic(progress);
+        const eased = easeOutCubic(progress);
         const currentY = startY + (targetY - startY) * eased;
-        
+
         window.scrollTo(0, currentY);
-        
+
         if (progress < 1) {
           animationId = requestAnimationFrame(animate);
         } else {
-          // Ensure we land exactly on target
           window.scrollTo(0, targetY);
           isSnappingRef.current = false;
           animationId = null;
         }
       };
-      
+
       animationId = requestAnimationFrame(animate);
     };
 
-    const onTouchStart = (e: TouchEvent) => {
-      // If animating, block touch completely
-      if (isSnappingRef.current) {
-        e.preventDefault();
-        return;
-      }
-      
-      isTouching = true;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = performance.now();
-      touchStartScrollY = window.scrollY;
-      
-      // Update current section from actual scroll position
-      currentSectionIdx = getCurrentSectionIndex();
-    };
+    // Schedule snap after scroll settles
+    const scheduleSnap = () => {
+      if (isSnappingRef.current) return;
 
-    const onTouchMove = (e: TouchEvent) => {
-      // Always prevent default during animation
-      if (isSnappingRef.current) {
-        e.preventDefault();
-        return;
-      }
-      
-      if (!isTouching) return;
-      
-      // Prevent native scrolling - we control everything
-      e.preventDefault();
-      
-      // Calculate drag distance for visual feedback
-      const currentY = e.touches[0].clientY;
-      const deltaY = touchStartY - currentY;
-      
-      const b = getContainerBounds(true);
-      if (!b) return;
-      
-      // Apply subtle drag preview (capped at 20% of section height for tight feel)
-      const maxPreview = b.sectionHeightPx * 0.2;
-      const preview = Math.max(-maxPreview, Math.min(maxPreview, deltaY * 0.4));
-      
-      // Calculate boundaries
-      const minY = b.containerTop;
-      const maxY = b.containerTop + (NUM_SECTIONS - 1) * b.sectionHeightPx;
-      const targetY = touchStartScrollY + preview;
-      
-      // Apply with edge resistance
-      if (targetY < minY) {
-        window.scrollTo(0, minY);
-      } else if (targetY > maxY) {
-        window.scrollTo(0, maxY);
-      } else {
-        window.scrollTo(0, targetY);
-      }
-    };
+      if (snapTimeout) clearTimeout(snapTimeout);
 
-    const onTouchEnd = (e: TouchEvent) => {
-      if (isSnappingRef.current) {
-        e.preventDefault();
-        return;
-      }
-      
-      if (!isTouching) return;
-      isTouching = false;
-      
-      const endY = e.changedTouches[0].clientY;
-      const deltaY = touchStartY - endY;
-      const deltaTime = performance.now() - touchStartTime;
-      
-      // Calculate velocity (px/ms)
-      const velocity = deltaY / deltaTime;
-      const absVelocity = Math.abs(velocity);
-      
-      // Determine if we should change section
-      let targetSection = currentSectionIdx;
-      
-      // Quick flick detection
-      const isQuickFlick = absVelocity > MOBILE_VELOCITY_THRESHOLD && Math.abs(deltaY) > 20;
-      
-      // Standard swipe detection
-      const isSwipe = Math.abs(deltaY) > MOBILE_SWIPE_THRESHOLD_PX;
-      
-      if (isQuickFlick || isSwipe) {
-        // Determine direction: positive deltaY = swipe up = go to next section
-        if (deltaY > 0) {
-          targetSection = Math.min(NUM_SECTIONS - 1, currentSectionIdx + 1);
+      snapTimeout = setTimeout(() => {
+        snapTimeout = null;
+        if (isSnappingRef.current) return;
+
+        const b = getContainerBounds(true);
+        if (!b) return;
+
+        const scrollY = window.scrollY;
+        const relativeScroll = scrollY - b.containerTop;
+        
+        // Determine target section based on position and velocity
+        let targetIdx: number;
+        
+        // If we have significant velocity, bias towards that direction
+        if (Math.abs(scrollVelocity) > 0.5) {
+          const currentSection = relativeScroll / b.sectionHeightPx;
+          if (scrollVelocity > 0) {
+            // Scrolling down - go to next section
+            targetIdx = Math.min(NUM_SECTIONS - 1, Math.ceil(currentSection));
+          } else {
+            // Scrolling up - go to previous section
+            targetIdx = Math.max(0, Math.floor(currentSection));
+          }
         } else {
-          targetSection = Math.max(0, currentSectionIdx - 1);
+          // Low velocity - snap to nearest
+          targetIdx = Math.round(relativeScroll / b.sectionHeightPx);
         }
-      }
-      
-      // Always animate to target section (either new or snap back)
-      e.preventDefault();
-      animateToSection(targetSection);
+
+        targetIdx = Math.max(0, Math.min(NUM_SECTIONS - 1, targetIdx));
+        animateToSection(targetIdx);
+      }, MOBILE_SNAP_DELAY_MS);
     };
 
-    const onTouchCancel = () => {
-      if (!isTouching) return;
-      isTouching = false;
+    // Track scroll velocity
+    const onScroll = () => {
+      const now = performance.now();
+      const deltaTime = now - lastScrollTime;
+      const deltaY = window.scrollY - lastScrollY;
       
-      // Snap back to current section
+      if (deltaTime > 0) {
+        scrollVelocity = deltaY / deltaTime;
+      }
+      
+      lastScrollY = window.scrollY;
+      lastScrollTime = now;
+
+      // Only schedule snap if not currently animating
       if (!isSnappingRef.current) {
-        animateToSection(currentSectionIdx);
+        scheduleSnap();
       }
     };
 
-    // Add event listeners with passive: false to enable preventDefault
-    document.addEventListener('touchstart', onTouchStart, { passive: false });
-    document.addEventListener('touchmove', onTouchMove, { passive: false });
-    document.addEventListener('touchend', onTouchEnd, { passive: false });
-    document.addEventListener('touchcancel', onTouchCancel, { passive: false });
+    // Block rapid scrolling during animation (optional enhancement)
+    const onTouchStart = () => {
+      // Cancel any pending snap when user touches
+      if (snapTimeout) {
+        clearTimeout(snapTimeout);
+        snapTimeout = null;
+      }
+      // Reset velocity tracking
+      lastScrollY = window.scrollY;
+      lastScrollTime = performance.now();
+      scrollVelocity = 0;
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
 
     return () => {
+      window.removeEventListener('scroll', onScroll);
       document.removeEventListener('touchstart', onTouchStart);
-      document.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('touchend', onTouchEnd);
-      document.removeEventListener('touchcancel', onTouchCancel);
-      if (animationId !== null) {
-        cancelAnimationFrame(animationId);
-      }
+      if (snapTimeout) clearTimeout(snapTimeout);
+      if (animationId !== null) cancelAnimationFrame(animationId);
     };
-  }, [isReady, isMobile, getCurrentSectionIndex, getContainerBounds]);
+  }, [isReady, isMobile, getContainerBounds]);
 
   // Render loop - optimized for 60fps smoothness
   useEffect(() => {

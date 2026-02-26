@@ -611,9 +611,11 @@ canvas {
   /* Mobile: no CSS scroll-snap – JS does one smooth snap (delayed, long ease-out) so it’s not snappy */
   body.page-home {
     -webkit-overflow-scrolling: touch;
+    scroll-snap-type: y proximity;
   }
   body.page-home .home-snap-section {
-    /* JS handles section snapping - each section is 100vh */
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
   }
 
   /* Opaque black top bar only on home page (mobile) */
