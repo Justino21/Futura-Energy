@@ -634,7 +634,7 @@ canvas {
     overscroll-behavior: none !important;
   }
 
-  /* Home page only (mobile): lighter glass overlay so content is clearer – no impact on other pages */
+  /* Home page only (mobile): stronger glass overlay so text is more readable */
   body.page-home .mobile-home-glass {
     position: fixed;
     top: 4.5rem;
@@ -643,9 +643,9 @@ canvas {
     bottom: 0;
     width: 100%;
     z-index: 50;
-    background: rgba(0, 0, 0, 0.38);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.52);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     pointer-events: none;
   }
 

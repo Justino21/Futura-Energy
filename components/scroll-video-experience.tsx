@@ -51,8 +51,8 @@ const SECTION_HEIGHT_VH = 100;
 const SNAP_DURATION = 0.8;
 const SNAP_EASE_OUT = (t: number) => 1 - Math.pow(1 - t, 3);
 const WHEEL_THRESHOLD = 25;
-// Mobile: slower scroll (taller sections) + one JS-controlled smooth snap (no CSS snap)
-const MOBILE_SECTION_HEIGHT_VH = 100;
+// Mobile: slower scroll (taller sections) so we don't skip any part; one JS-controlled smooth snap (no CSS snap)
+const MOBILE_SECTION_HEIGHT_VH = 130;
 const MOBILE_SNAP_DURATION_MS = 450;
 const MOBILE_SNAP_DELAY_MS = 120;
 const MOBILE_SNAP_THRESHOLD_PX = 12;
