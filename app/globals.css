@@ -611,11 +611,6 @@ canvas {
   /* Mobile: no CSS scroll-snap – JS does one smooth snap (delayed, long ease-out) so it’s not snappy */
   body.page-home {
     -webkit-overflow-scrolling: touch;
-    scroll-snap-type: y proximity;
-  }
-  body.page-home .home-snap-section {
-    scroll-snap-align: start;
-    scroll-snap-stop: normal;
   }
 
   /* Opaque black top bar only on home page (mobile) */
@@ -643,9 +638,9 @@ canvas {
     bottom: 0;
     width: 100%;
     z-index: 50;
-    background: rgba(0, 0, 0, 0.52);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     pointer-events: none;
   }
 
